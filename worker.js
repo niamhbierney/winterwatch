@@ -27,11 +27,11 @@ export default {
    const upstream = await fetch("https://api.openai.com/v1/responses", {
     method:"POST",
     headers:{"Authorization":"Bearer "+env.OPENAI_API_KEY,"Content-Type":"application/json"},
-    body:JSON.stringify({model:env.OPENAI_MODEL||"gpt-4.1-mini",store:false,instructions:system,input:"Prepare an advisory briefing from this Winter Watch evidence. Do not approve or dispatch treatment.\\n\\n"+serialized,max_output_tokens:1100})
+    body:JSON.stringify({model:env.OPENAI_MODEL||"gpt-4.1-mini",store:false,instructions:system,input:"Prepare an advisory briefing from this Winter Watch evidence. Do not approve or dispatch treatment.\n\n"+serialized,max_output_tokens:1100})
    });
    const result = await upstream.json().catch(()=>({}));
    if (!upstream.ok) return json({error:"AI provider request failed: "+(result.error?.message||upstream.statusText)},502);
-   const briefing = (result.output||[]).flatMap(item=>item.content||[]).filter(item=>item.type==="output_text").map(item=>item.text).join("\\n").trim();
+   const briefing = (result.output||[]).flatMap(item=>item.content||[]).filter(item=>item.type==="output_text").map(item=>item.text).join("\n").trim();
    if (!briefing) return json({error:"AI provider returned no text output."},502);
    return json({briefing,model:result.model||env.OPENAI_MODEL||"gpt-4.1-mini"});
   }
@@ -41,7 +41,7 @@ export default {
 async function verifyAccess(jwt, env) {
  try {
   if (!jwt || !env.ACCESS_TEAM_DOMAIN || !env.ACCESS_AUD) return {ok:false,error:"Cloudflare Access is not configured. Set ACCESS_TEAM_DOMAIN and ACCESS_AUD and protect this hostname with an Access application."};
-  const team=String(env.ACCESS_TEAM_DOMAIN).replace(/^https?:\\/\\//,"").replace(/\\/$/,"");
+  const team=String(env.ACCESS_TEAM_DOMAIN).replace(/^https?:\/\//,"").replace(/\/$/,"");
   const parts=jwt.split(".");
   if(parts.length!==3)return {ok:false,error:"Invalid Access identity token."};
   const decode=s=>JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g,"+").replace(/_/g,"/")),c=>c.charCodeAt(0))));
